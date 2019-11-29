@@ -4,6 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <mpi.h>
+#include <errno.h>
 
 #define COLS 1000
 #define ROWS 1000
@@ -179,22 +180,19 @@ int main(int argc, char **argv) {
   );
 
   /*fprintf(stderr, "[%d] Open file\n", mpi_rank);*/
+  errno = 0;
   fp = fopen("c.pnm", "a");
-  if (!fp) *NULL;
+  if (NULL == fp)
+  {
+    fprintf(stderr, "Failed to open file due to %d\n", errno);
+    exit(errno);
+  }
+
   /*fprintf(stderr, "[%d] Start printing\n", mpi_rank);*/
   printGridtoFile(fp, grid_a, x_lower, x_upper);
- 
+
   /*fprintf(stderr, "[%d] Done printing\n", mpi_rank);*/
   fclose(fp);
-
-  if (1) MPI_Send(
-    &dummy,                   // buf
-    1,                        // count
-    MPI_BYTE,                 // type
-    (mpi_rank+1) % mpi_size,  // source
-    0,                        // tag
-    MPI_COMM_WORLD            // communicator
-  );
 
   if (mpi_rank == 0) {
     MPI_Recv(
